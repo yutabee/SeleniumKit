@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.support.ui import Select
 
 
 def initialize_driver(headless: bool = True) -> webdriver.Chrome:
@@ -82,3 +83,86 @@ def find_element(driver, by, value, timeout=10):
         error_msg = f"Element not found for selector ({by}, {value})"
         print(error_msg)
         raise NoSuchElementException(error_msg) from e
+
+
+def input_text(driver, by, value, text):
+    """
+    指定された条件の要素にテキストを入力します。
+
+    Args:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        by (By): 検索条件のタイプ。
+        value (str): 検索する要素の識別子。
+        text (str): 入力するテキスト。
+
+    Raises:
+        NoSuchElementException: 要素が見つからない場合。
+        WebDriverException: 要素へのテキスト入力中にエラーが発生した場合。
+        
+    使用例:
+        >>> driver = initialize_driver()
+        >>> input_text(driver, By.ID, 'element_id', 'input text')
+    """
+    try:
+        element = find_element(driver, by, value)
+        element.clear()
+        element.send_keys(text)
+    except WebDriverException as e:
+        print(
+            f"An error occurred while inputting text into the element with selector ({by}, {value}): {e}"
+        )
+        raise
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise
+
+
+def scroll_to_bottom(driver):
+    """
+    ブラウザでページの最下部までスクロールします。
+
+    Args:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+
+    Returns:
+        None
+    """
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+
+def get_current_url(driver):
+    """
+    現在のブラウザのURLを取得します。
+
+    Args:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+
+    Returns:
+        str: 現在のURL。
+    """
+    return driver.current_url
+
+
+def select_from_dropdown(driver, by, value, option_text):
+    """
+    ドロップダウンメニューから指定されたテキストを持つオプションを選択します。
+
+    Args:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        by (By): 検索条件のタイプ。
+        value (str): 検索する要素の識別子。
+        option_text (str): 選択するオプションのテキスト。
+
+    Raises:
+        NoSuchElementException: ドロップダウン要素またはオプションが見つからない場合。
+        WebDriverException: オプションの選択中にエラーが発生した場合。
+    """
+    try:
+        element = find_element(driver, by, value)
+        select = Select(element)
+        select.select_by_visible_text(option_text)
+    except WebDriverException as e:
+        print(
+            f"An error occurred while selecting '{option_text}' from dropdown with selector ({by}, {value}): {e}"
+        )
+        raise
