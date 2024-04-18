@@ -1,6 +1,10 @@
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
 def initialize_driver(headless: bool = True) -> webdriver.Chrome:
@@ -43,4 +47,38 @@ def initialize_driver(headless: bool = True) -> webdriver.Chrome:
         print(f"An unexpected error occurred: {e}")
         raise
 
-  
+
+def find_element(driver, by, value, timeout=10):
+    """
+    指定された条件で要素を検索し、指定された時間内に要素が見つかるのを待ちます。
+
+    Args:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        by (By): 検索条件のタイプ（By.ID, By.XPATHなど）。
+        value (str): 検索する要素の識別子。
+        timeout (int): 最大待機時間（デフォルトは10秒）。
+
+    Returns:
+        WebElement: 検索された要素。
+
+    Raises:
+        NoSuchElementException: 指定されたセレクタで要素が見つからない場合。
+        TimeoutException: 指定された時間内に要素が見つからない場合。
+        
+    使用例:
+        >>> driver = initialize_driver()
+        >>> element = find_element(driver, By.ID, 'element_id')
+    """
+    try:
+        element = WebDriverWait(driver, timeout).until(
+            EC.visibility_of_element_located((by, value))
+        )
+        return element
+    except TimeoutException as e:
+        error_msg = f"Timeout: Element not visible after {timeout} seconds for selector ({by}, {value})"
+        print(error_msg)
+        raise TimeoutException(error_msg) from e
+    except NoSuchElementException as e:
+        error_msg = f"Element not found for selector ({by}, {value})"
+        print(error_msg)
+        raise NoSuchElementException(error_msg) from e
