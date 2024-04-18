@@ -14,13 +14,13 @@ def initialize_driver(headless: bool = True) -> webdriver.Chrome:
 
     Args:
         headless (bool): ブラウザをヘッドレスモードで起動するかどうか。
-    
+
     Returns:
         webdriver.Chrome: 初期化されたWebDriverインスタンス
-        
+
     Raises:
         WebDriverException: WebDriverの初期化またはURLのオープン中にエラーが発生した場合
-        
+
     使用例:
         >>> driver = initialize_driver(headless=True)
         >>> driver.get('https://www.google.com')
@@ -34,15 +34,19 @@ def initialize_driver(headless: bool = True) -> webdriver.Chrome:
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--disable-software-rasterizer")
-        chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
+        chrome_options.add_argument(
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+        )
 
         driver = webdriver.Chrome(options=chrome_options)
 
-        print('initialize driver success')
+        print("initialize driver success")
         return driver
 
     except WebDriverException as e:
-        print(f"An error occurred while initializing the WebDriver or opening the URL: {e}")
+        print(
+            f"An error occurred while initializing the WebDriver or opening the URL: {e}"
+        )
         raise
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
@@ -65,7 +69,7 @@ def find_element(driver, by, value, timeout=10):
     Raises:
         NoSuchElementException: 指定されたセレクタで要素が見つからない場合。
         TimeoutException: 指定された時間内に要素が見つからない場合。
-        
+
     使用例:
         >>> driver = initialize_driver()
         >>> element = find_element(driver, By.ID, 'element_id')
@@ -98,7 +102,7 @@ def input_text(driver, by, value, text):
     Raises:
         NoSuchElementException: 要素が見つからない場合。
         WebDriverException: 要素へのテキスト入力中にエラーが発生した場合。
-        
+
     使用例:
         >>> driver = initialize_driver()
         >>> input_text(driver, By.ID, 'element_id', 'input text')
