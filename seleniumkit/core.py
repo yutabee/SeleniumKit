@@ -6,6 +6,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import NoSuchWindowException
 
 
 def initialize_driver(headless: bool = True) -> webdriver.Chrome:
@@ -170,3 +172,163 @@ def select_from_dropdown(driver, by, value, option_text):
             f"An error occurred while selecting '{option_text}' from dropdown with selector ({by}, {value}): {e}"
         )
         raise
+
+
+def handle_alert(driver, accept=True):
+    """
+    ブラウザのアラートを処理します。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        accept (bool): Trueの場合、アラートを承認します。Falseの場合、アラートを拒否します。
+
+    戻り値:
+        str: アラートのテキスト。
+
+    例外:
+        NoAlertPresentException: アラートが存在しない場合に発生します。
+    """
+    try:
+        alert = driver.switch_to.alert
+        alert_text = alert.text
+        if accept:
+            alert.accept()
+        else:
+            alert.dismiss()
+        return alert_text
+    except NoAlertPresentException:
+        print("アラートが存在しません。")
+        raise
+
+
+def switch_to_window(driver, index=0):
+    """
+    ウィンドウまたはタブをインデックスに基づいて切り替えます。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        index (int): 切り替えるウィンドウのインデックス（デフォルトは0）。
+
+    例外:
+        NoSuchWindowException: 指定されたインデックスのウィンドウが存在しない場合に発生します。
+    """
+    try:
+        windows = driver.window_handles
+        driver.switch_to.window(windows[index])
+    except IndexError as exc:
+        raise NoSuchWindowException(
+            f"インデックス {index} のウィンドウが見つかりません"
+        ) from exc
+
+
+def take_element_screenshot(driver, by, value, file_path):
+    """
+    特定の要素のスクリーンショットを撮ります。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        by (By): セレクタの種類。
+        value (str): セレクタの値。
+        file_path (str): スクリーンショットの保存先ファイルパス。
+
+    例外:
+        NoSuchElementException: 要素が見つからない場合に発生します。
+    """
+    try:
+        element = find_element(driver, by, value)
+        element.screenshot(file_path)
+    except NoSuchElementException:
+        print(f"No element found with {by} = {value}")
+    except WebDriverException:
+        print("An error occurred while taking the screenshot.")
+
+
+def is_element_present(driver, by, value):
+    """
+    指定された条件の要素がページ上に存在するかどうかを確認します。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        by (By): セレクタの種類。
+        value (str): セレクタの値。
+
+    戻り値:
+        bool: 要素が存在する場合はTrue、存在しない場合はFalse。
+    """
+    try:
+        driver.find_element(by, value)
+        return True
+    except NoSuchElementException:
+        return False
+
+
+def take_full_page_screenshot(driver, file_path):
+    """
+    ブラウザの現在のページ全体のスクリーンショットを撮ります。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        file_path (str): スクリーンショットの保存先ファイルパス。
+
+    戻り値:
+        None
+
+    使用例:
+        >>> driver = initialize_driver()
+        >>> driver.get('https://www.example.com')
+        >>> take_full_page_screenshot(driver, 'fullpage.png')
+    """
+    try:
+        # Set the page size to cover the whole page
+        original_size = driver.get_window_size()
+        required_width = driver.execute_script(
+            "return document.body.parentNode.scrollWidth"
+        )
+        required_height = driver.execute_script(
+            "return document.body.parentNode.scrollHeight"
+        )
+        driver.set_window_size(required_width, required_height)
+        driver.save_screenshot(file_path)
+        driver.set_window_size(original_size["width"], original_size["height"])
+    except WebDriverException:
+        print("An error occurred while taking the screenshot.")
+        raise
+
+
+def execute_script(driver, script, *args):
+    """
+    ブラウザで任意のJavaScriptを実行します。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        script (str): 実行するJavaScriptのコード。
+        *args: スクリプトに渡す引数。
+
+    戻り値:
+        任意: スクリプトの実行結果。
+
+    使用例:
+        >>> driver = initialize_driver()
+        >>> result = execute_script(driver, 'return document.title;')
+        >>> print(result)
+    """
+    return driver.execute_script(script, *args)
+
+
+def scroll_to_element(driver, element):
+    """
+    指定した要素までスクロールします。
+
+    引数:
+        driver (webdriver.Chrome): WebDriverのインスタンス。
+        element (WebElement): スクロール対象の要素。
+
+    戻り値:
+        None
+
+    使用例:
+        >>> driver = initialize_driver()
+        >>> element = find_element(driver, By.ID, 'footer')
+        >>> scroll_to_element(driver, element)
+    """
+    driver.execute_script("arguments[0].scrollIntoView(true);", element)
